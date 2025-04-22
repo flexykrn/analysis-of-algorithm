@@ -1,0 +1,53 @@
+-- Create the database
+CREATE DATABASE EmployeeDB;
+
+-- Use the newly created database
+USE EmployeeDB;
+
+-- Create the Employees_SE table to store employee information
+CREATE TABLE Employees_SE (
+    EmployeeID INT PRIMARY KEY,
+    EmployeeName VARCHAR(100) NOT NULL,
+    Salary DECIMAL(10, 2) NOT NULL
+);
+
+-- Insert some sample data into Employees_SE table
+INSERT INTO Employees_SE (EmployeeID, EmployeeName, Salary) VALUES
+(1, 'Alice', 5000.00),
+(2, 'Bob', 6000.00),
+(3, 'Charlie', 5500.00),
+(4, 'David', 7000.00);
+
+-- Create the SalaryChanges table to log changes to employee salaries
+CREATE TABLE SalaryChanges (
+    LogID INT AUTO_INCREMENT PRIMARY KEY,
+    EmployeeID INT,
+    OldSalary DECIMAL(10, 2),
+    NewSalary DECIMAL(10, 2),
+    ChangeDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (EmployeeID) REFERENCES Employees_SE(EmployeeID)
+);
+
+-- Set delimiter to // to define a multi-line trigger
+DELIMITER //
+
+-- Create a trigger to log salary changes in the SalaryChanges table
+CREATE TRIGGER AfterSalaryUpdate
+AFTER UPDATE ON Employees_SE
+FOR EACH ROW
+BEGIN
+    -- Insert a record into SalaryChanges table whenever salary is updated
+    INSERT INTO SalaryChanges (EmployeeID, OldSalary, NewSalary)
+    VALUES (OLD.EmployeeID, OLD.Salary, NEW.Salary);
+END //
+
+-- Reset delimiter to ;
+DELIMITER ;
+
+-- Now, let's update a salary to trigger the logging
+UPDATE Employees_SE
+SET Salary = 7500
+WHERE EmployeeID = 4;
+
+-- Select from the SalaryChanges table to see the logged record
+SELECT * FROM SalaryChanges;
